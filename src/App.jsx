@@ -89,19 +89,19 @@ const G = `
   .fade-up { animation: fadeUp 0.5s cubic-bezier(0.16,1,0.3,1) both; }
 
   .auth-screen {
-    width:100%; min-height:100vh; min-height:100dvh;
+    width:100vw; min-height:100vh; min-height:100dvh;
     display:flex; align-items:center; justify-content:center;
-    padding:16px; position:relative; overflow:hidden;
+    padding:20px; position:fixed; inset:0; overflow:auto;
   }
   .auth-card {
-    width:100%; max-width:440px;
-    background:rgba(13,19,33,0.94); backdrop-filter:blur(30px);
+    width:100%; max-width:460px;
+    background:rgba(13,19,33,0.96); backdrop-filter:blur(30px);
     border:1px solid rgba(255,255,255,0.08); border-radius:24px;
-    padding:44px 40px;
+    padding:48px 44px;
     box-shadow:0 30px 100px rgba(0,0,0,0.6),0 0 0 1px rgba(124,106,247,0.08);
-    position:relative; z-index:1;
+    position:relative; z-index:1; margin:auto;
   }
-  @media(max-width:480px){ .auth-card { padding:28px 18px; border-radius:20px; } }
+  @media(max-width:520px){ .auth-card { padding:32px 24px; border-radius:20px; max-width:100%; } }
 
   .card { background:var(--surface); border:1px solid var(--border); border-radius:20px; transition:border-color 0.3s; }
   .card:hover { border-color:var(--border2); }
@@ -130,32 +130,37 @@ const G = `
 
   .spin { width:18px; height:18px; border:2px solid rgba(255,255,255,0.2); border-top-color:#fff; border-radius:50%; animation:spin 0.7s linear infinite; flex-shrink:0; }
 
-  .app-layout { display:flex; width:100%; min-height:100vh; min-height:100dvh; }
+  .app-layout { display:flex; width:100vw; min-height:100vh; min-height:100dvh; overflow:hidden; }
 
   .sidebar {
-    width:240px; min-width:240px; flex-shrink:0;
-    background:rgba(7,11,20,0.97); backdrop-filter:blur(20px);
+    width:260px; min-width:260px; flex-shrink:0;
+    background:rgba(7,11,20,0.98); backdrop-filter:blur(20px);
     border-right:1px solid var(--border);
-    display:flex; flex-direction:column; padding:22px 14px;
-    position:sticky; top:0; height:100vh; height:100dvh; z-index:50;
+    display:flex; flex-direction:column; padding:24px 16px;
+    position:fixed; top:0; left:0; height:100vh; height:100dvh; z-index:50;
+    overflow-y:auto;
   }
 
-  .main-area { flex:1; display:flex; flex-direction:column; overflow:auto; min-width:0; width:100%; }
-  .topbar { padding:14px 24px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:14px; background:rgba(7,11,20,0.85); backdrop-filter:blur(20px); position:sticky; top:0; z-index:10; width:100%; }
-  .page { padding:24px; flex:1; width:100%; max-width:1200px; margin:0 auto; }
+  .main-area { flex:1; display:flex; flex-direction:column; overflow:auto; min-width:0; width:100%; margin-left:260px; }
+  .topbar { padding:14px 28px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:14px; background:rgba(7,11,20,0.9); backdrop-filter:blur(20px); position:sticky; top:0; z-index:10; width:100%; }
+  .page { padding:28px 32px; flex:1; width:100%; }
 
   .stat-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; width:100%; }
 
   .overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.75); z-index:49; backdrop-filter:blur(4px); }
 
-  @media(max-width:960px){ .stat-grid { grid-template-columns:repeat(2,1fr); } }
+  @media(min-width:769px){
+    .sidebar { transform:none !important; position:fixed !important; }
+    .main-area { margin-left:260px; }
+  }
 
   @media(max-width:768px){
-    .sidebar { position:fixed !important; top:0; left:0; height:100vh !important; height:100dvh !important; transform:translateX(-100%); z-index:200; transition:transform 0.3s cubic-bezier(0.16,1,0.3,1); }
+    .main-area { margin-left:0; }
+    .sidebar { position:fixed !important; top:0; left:0; height:100vh !important; height:100dvh !important; transform:translateX(-100%); z-index:200; transition:transform 0.3s cubic-bezier(0.16,1,0.3,1); width:240px; min-width:240px; }
     .sidebar.open { transform:translateX(0) !important; }
     .overlay { display:block; }
-    .topbar { padding:12px 14px; }
-    .page { padding:12px; }
+    .topbar { padding:12px 16px; }
+    .page { padding:14px 12px; }
     .stat-grid { grid-template-columns:1fr 1fr; gap:10px; }
     .form-cols { grid-template-columns:1fr !important; }
     .hide-mob { display:none !important; }
@@ -163,6 +168,7 @@ const G = `
   @media(max-width:400px){
     .stat-grid { grid-template-columns:1fr 1fr; gap:8px; }
     .stat-num { font-size:18px !important; }
+    .page { padding:10px 8px; }
   }
 `;
 
@@ -499,7 +505,7 @@ const AIAdvisor = ({ expenses, userEmail }) => {
 const Dashboard = ({ user, onLogout }) => {
   const [expenses, setExpenses] = useState([]);
   const [tab, setTab] = useState("dashboard");
-  const [sideOpen, setSideOpen] = useState(window.innerWidth >= 768);
+  const [sideOpen, setSideOpen] = useState(false); // only used for mobile overlay
 
   const load = useCallback(async () => {
     const { data } = await MockDB.getExpenses(user.id);
@@ -509,7 +515,7 @@ const Dashboard = ({ user, onLogout }) => {
   useEffect(() => { load(); }, [load]);
 
   useEffect(() => {
-    const fn = () => { if (window.innerWidth >= 768) setSideOpen(true); };
+    const fn = () => { if (window.innerWidth >= 768) setSideOpen(false); };
     window.addEventListener("resize", fn);
     return () => window.removeEventListener("resize", fn);
   }, []);
@@ -544,7 +550,7 @@ const Dashboard = ({ user, onLogout }) => {
       )}
 
       {/* SIDEBAR */}
-      <div className={`sidebar ${sideOpen?"open":""}`}>
+      <div className={`sidebar${sideOpen?" open":""}`}>
         <div style={{ padding:"4px 6px 18px", borderBottom:"1px solid var(--border)", marginBottom:12 }}>
           <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:6 }}>
             <div style={{ width:34, height:34, borderRadius:10, background:"linear-gradient(135deg,rgba(124,106,247,0.3),rgba(167,139,250,0.1))", display:"flex", alignItems:"center", justifyContent:"center", fontSize:16, flexShrink:0 }}>💰</div>

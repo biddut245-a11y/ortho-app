@@ -283,7 +283,6 @@ const StatCard = ({ icon, label, value, color, sub, delay=0 }) => (
   </div>
 );
 
-/* EXPENSE FORM */
 const ExpenseForm = ({ userId, onAdd }) => {
   const [desc, setDesc] = useState("");
   const [amount, setAmount] = useState("");
@@ -291,15 +290,28 @@ const ExpenseForm = ({ userId, onAdd }) => {
   const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
   const [loading, setLoading] = useState(false);
   const [done, setDone] = useState(false);
+  const [err, setErr] = useState("");
 
   const submit = async () => {
-    if (!desc || !amount || !date) return;
+    if (!desc.trim() || !amount || !date) return;
+    setErr("");
     setLoading(true);
-    await MockDB.addExpense({ user_id:userId, description:desc, amount:parseFloat(amount), category:cat, date });
+    const { error } = await MockDB.addExpense({
+      user_id: userId,
+      description: desc.trim(),
+      amount: parseFloat(amount),
+      category: cat,
+      date
+    });
+    setLoading(false);
+    if (error) {
+      setErr("খরচ সংরক্ষণ করতে সমস্যা হয়েছে: " + error.message);
+      return;
+    }
     setDesc(""); setAmount(""); setCat("বাজার"); setDate(new Date().toISOString().split("T")[0]);
-    setLoading(false); setDone(true);
+    setDone(true);
     setTimeout(() => setDone(false), 2500);
-    onAdd();
+    await onAdd();
   };
 
   return (
@@ -338,6 +350,11 @@ const ExpenseForm = ({ userId, onAdd }) => {
           <button className="btn btn-grad" onClick={submit} disabled={loading||!desc||!amount} style={{ width:"100%", padding:"13px", fontSize:15 }}>
             {loading?<><div className="spin"/><span>সংরক্ষণ হচ্ছে...</span></>:done?"✅ সংরক্ষিত!":"💾 খরচ সংরক্ষণ করুন"}
           </button>
+          {err && (
+            <div style={{ marginTop:10, background:"rgba(255,107,107,0.1)", border:"1px solid rgba(255,107,107,0.25)", borderRadius:10, padding:"10px 14px", color:"#ff6b6b", fontSize:13, display:"flex", gap:8, alignItems:"flex-start" }}>
+              <span>⚠️</span><span>{err}</span>
+            </div>
+          )}
         </div>
       </div>
     </div>
